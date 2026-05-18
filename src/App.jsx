@@ -678,7 +678,7 @@ export default function WorkTime() {
         const displayYearly = yearlyGoals.filter(g => goalsTab==="전체" ? true : goalsTab==="진행중" ? !g.done : g.done);
 
         return (
-          <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px"}}>
+          <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px",display:"flex",flexDirection:"column"}}>
             <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
               <div style={{display:"flex",background:"white",borderRadius:14,padding:5,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
                 {["전체", "진행중", "완료"].map(tab => (
@@ -693,15 +693,15 @@ export default function WorkTime() {
               </div>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1.3fr",gap:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1.3fr",gap:16,flex:1,minHeight:0}}>
               {/* Left Column: 5월 세부 목표 */}
-              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",display:"flex",flexDirection:"column"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
                   <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.month}월 세부 목표</h2>
                   <span style={{background:"#f59e0b",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{monthlyRate}% 달성</span>
                 </div>
                 
-                <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <div style={{display:"flex",flexDirection:"column",gap:12,flex:1,minHeight:0}}>
                   {CATS.map(cat => {
                     const goals = monthlyGoals[cat];
                     const catDone = goals.filter(g=>g.done).length;
@@ -709,7 +709,7 @@ export default function WorkTime() {
                     const displayGoals = goals.filter(g => goalsTab==="전체" ? true : goalsTab==="진행중" ? !g.done : g.done);
                     
                     return (
-                      <div key={cat} style={{background:"#faf8f5",borderRadius:16,padding:"16px"}}>
+                      <div key={cat} style={{background:"#faf8f5",borderRadius:16,padding:"16px",display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                           <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={() => setGoalModal(cat)}>
                             <div style={{width:8,height:8,borderRadius:"50%",background:CAT_COLOR[cat]}}/>
@@ -718,7 +718,7 @@ export default function WorkTime() {
                           </div>
                           <span style={{fontWeight:700,fontSize:14,color:CAT_COLOR[cat]}}>{catRate}%</span>
                         </div>
-                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                        <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,overflowY:"auto"}}>
                           {displayGoals.map(g => (
                             <div key={g.id} onClick={()=>setMonthlyGoals(p=>({...p, [cat]: p[cat].map(x=>x.id===g.id?{...x,done:!x.done}:x)}))}
                               style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"4px 0"}}>
@@ -737,7 +737,7 @@ export default function WorkTime() {
               </div>
 
               {/* Right Column: 2026년 목표 */}
-              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",alignSelf:"start"}}>
+              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",display:"flex",flexDirection:"column"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={() => setGoalModal(`${TODAY.year}년 목표`)}>
                     <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.year}년 목표</h2>
