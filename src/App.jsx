@@ -184,6 +184,8 @@ function EventModal({ modal, events, onClose, onAdd, onDelete, onSave }) {
       </div>
     </div>
   );
+}
+
 function GoalModal({ category, goals, onClose, onAdd, onEdit, onDelete, color }) {
   const [newGoal, setNewGoal] = useState("");
   const [editingId, setEditingId] = useState(null);
