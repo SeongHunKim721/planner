@@ -12,22 +12,17 @@ const CAT_LIGHT = { "일":"#fef3c7","운동":"#dcfce7","공부":"#ede9fe","기�
 const CAT_TEXT  = { "일":"#78350f","운동":"#14532d","공부":"#3b0764","기타":"#831843" };
 const NAV = [["calendar","▦"],["goals","◎"],["analytics","▲"]];
 
-const BASE_RATES = {
-  "2026-5-1":78,"2026-5-2":65,"2026-5-3":82,"2026-5-4":91,"2026-5-5":70,
-  "2026-5-6":88,"2026-5-7":95,"2026-5-8":73,"2026-5-9":86,"2026-5-10":80,
-  "2026-5-11":92,"2026-5-12":67,"2026-5-13":84,"2026-5-14":96,"2026-5-15":75,
-  "2026-5-16":88,"2026-5-17":71,
-};
+const BASE_RATES = {};
 
 const DEFAULT_TODOS = [];
 
 const DEFAULT_EVENTS = {};
 
 const SAMPLE_CAT = {
-  "일":   [72,78,75,82],
-  "운동": [45,52,60,58],
-  "공부": [80,85,78,88],
-  "기타": [65,70,62,75],
+  "일":   [],
+  "운동": [],
+  "공부": [],
+  "기타": [],
 };
 
 const DEFAULT_MONTHLY_GOALS = {
@@ -54,8 +49,8 @@ function getMonthlyOverall(todos) {
   const mayR = validMay.length ? Math.round(validMay.reduce((a, b) => a + b, 0) / validMay.length) : null;
   return ["1월","2월","3월","4월","5월"].map((m, i) => {
     if (i < 4) {
-      const vals = CATS.map(c => SAMPLE_CAT[c][i]);
-      return { month: m, rate: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) };
+      const vals = CATS.map(c => SAMPLE_CAT[c][i]).filter(v => typeof v === 'number');
+      return { month: m, rate: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null };
     }
     return { month: m, rate: mayR };
   });
@@ -65,7 +60,7 @@ function getMonthlyForCat(cat, todos) {
   const items = todos.filter(t => t.category === cat);
   const mayR = items.length ? Math.round(items.filter(t => t.done).length / items.length * 100) : null;
   return ["1월","2월","3월","4월","5월"].map((m, i) => ({
-    month: m, rate: i < 4 ? SAMPLE_CAT[cat][i] : mayR
+    month: m, rate: i < 4 ? (typeof SAMPLE_CAT[cat][i] === 'number' ? SAMPLE_CAT[cat][i] : null) : mayR
   }));
 }
 
@@ -212,8 +207,16 @@ export default function WorkTime() {
           window.storage.get("wt_rates"),
         ]);
         let merged = { ...BASE_RATES };
-        if (ratesRes.status === "fulfilled" && ratesRes.value)
-          merged = { ...merged, ...JSON.parse(ratesRes.value.value) };
+        if (ratesRes.status === "fulfilled" && ratesRes.value) {
+          const storedRates = JSON.parse(ratesRes.value.value);
+          Object.keys(storedRates).forEach(k => {
+            const [y, m, d] = k.split('-').map(Number);
+            if (y < 2026 || (y === 2026 && m < 5) || (y === 2026 && m === 5 && d < 19)) {
+              delete storedRates[k];
+            }
+          });
+          merged = { ...merged, ...storedRates };
+        }
         const storedDate = dateRes.status === "fulfilled" && dateRes.value ? dateRes.value.value : null;
         const storedTodos = todosRes.status === "fulfilled" && todosRes.value ? JSON.parse(todosRes.value.value) : null;
         if (storedDate && storedDate !== TODAY_STR) {
