@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
-const TODAY = { year: 2026, month: 5, day: 18 };
-const TODAY_STR = "2026-5-18";
+const TODAY = { year: 2026, month: 5, day: 19 };
+const TODAY_STR = "2026-5-19";
 const EV_COLORS = ["#f59e0b","#818cf8","#fb7185","#34d399","#60a5fa"];
 const MONTH_LABELS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 const DAY_LABELS = ["일","월","화","수","목","금","토"];
@@ -19,20 +19,9 @@ const BASE_RATES = {
   "2026-5-16":88,"2026-5-17":71,
 };
 
-const DEFAULT_TODOS = [
-  {id:1,text:"주간 보고서 작성",done:true,category:"일"},
-  {id:2,text:"이메일 답장",done:true,category:"일"},
-  {id:3,text:"디자인 피드백 전달",done:false,category:"공부"},
-  {id:4,text:"코드 리뷰",done:false,category:"공부"},
-  {id:5,text:"미팅 자료 준비",done:true,category:"일"},
-  {id:6,text:"30분 런닝",done:true,category:"운동"},
-];
+const DEFAULT_TODOS = [];
 
-const DEFAULT_EVENTS = {
-  "2026-5-18":[{id:1,time:"09:00",title:"팀 스탠드업"},{id:2,time:"13:00",title:"디자인 리뷰"},{id:3,time:"15:30",title:"클라이언트 미팅"}],
-  "2026-5-20":[{id:4,time:"10:00",title:"기획 회의"}],
-  "2026-5-22":[{id:5,time:"14:00",title:"코드 리뷰"}],
-};
+const DEFAULT_EVENTS = {};
 
 const SAMPLE_CAT = {
   "일":   [72,78,75,82],
@@ -42,39 +31,13 @@ const SAMPLE_CAT = {
 };
 
 const DEFAULT_MONTHLY_GOALS = {
-  "일": [
-    { id: 101, text: "신규 프로젝트 기획안", done: true },
-    { id: 102, text: "팀원 1:1 면담", done: false },
-    { id: 103, text: "월간 성과 보고서", done: false }
-  ],
-  "운동": [
-    { id: 201, text: "주 3회 헬스장", done: true },
-    { id: 202, text: "체지방 2% 감량", done: false },
-    { id: 203, text: "주말 등산 1회", done: true }
-  ],
-  "공부": [
-    { id: 301, text: "React 완벽 마스터", done: false },
-    { id: 302, text: "UX 아티클 5개", done: true },
-    { id: 303, text: "영어 회화 주2회", done: false }
-  ],
-  "기타": [
-    { id: 401, text: "방 정리 및 청소", done: true },
-    { id: 402, text: "가족과 저녁식사", done: true },
-    { id: 403, text: "새로운 취미 찾기", done: false }
-  ]
+  "일": [],
+  "운동": [],
+  "공부": [],
+  "기타": []
 };
 
-const DEFAULT_YEARLY_GOALS = [
-  { id: 1, text: "연봉 20% 인상", done: false },
-  { id: 2, text: "바디프로필 촬영", done: false },
-  { id: 3, text: "해외 여행 2회", done: false },
-  { id: 4, text: "토익 900점 달성", done: false },
-  { id: 5, text: "독서 20권 읽기", done: true },
-  { id: 6, text: "투자 수익률 10%", done: false },
-  { id: 7, text: "사이드 플젝 배포", done: true },
-  { id: 8, text: "자격증 1개 취득", done: false },
-  { id: 9, text: "매월 50만원 저축", done: true }
-];
+const DEFAULT_YEARLY_GOALS = [];
 
 function calcCatRates(todos) {
   const r = {};
@@ -237,6 +200,8 @@ export default function WorkTime() {
   const [monthlyGoals, setMonthlyGoals] = useState(DEFAULT_MONTHLY_GOALS);
   const [yearlyGoals, setYearlyGoals] = useState(DEFAULT_YEARLY_GOALS);
   const [goalsTab, setGoalsTab] = useState("전체");
+  const [newMonthly, setNewMonthly] = useState({ "일": "", "운동": "", "공부": "", "기타": "" });
+  const [newYearly, setNewYearly] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -647,7 +612,25 @@ export default function WorkTime() {
                               <span style={{fontSize:13,fontWeight:500,color:g.done?"#c5bdb3":"#333",textDecoration:g.done?"line-through":"none"}}>{g.text}</span>
                             </div>
                           ))}
-                          {displayGoals.length === 0 && <div style={{fontSize:12,color:"#b0a89a"}}>항목이 없습니다.</div>}
+                          {displayGoals.length === 0 && <div style={{fontSize:12,color:"#b0a89a",marginBottom:4}}>항목이 없습니다.</div>}
+                        </div>
+                        <div style={{display:"flex",gap:6,marginTop:12}}>
+                          <input value={newMonthly[cat]} onChange={e=>setNewMonthly(p=>({...p, [cat]:e.target.value}))}
+                            onKeyDown={e=>{
+                              if(e.key==="Enter" && newMonthly[cat].trim()){
+                                setMonthlyGoals(p=>({...p, [cat]: [...p[cat], {id:Date.now(), text:newMonthly[cat].trim(), done:false}]}));
+                                setNewMonthly(p=>({...p, [cat]:""}));
+                              }
+                            }}
+                            placeholder="목표 추가"
+                            style={{flex:1,border:"1px solid #ede9e3",borderRadius:8,padding:"6px 10px",fontSize:11,outline:"none",color:"#333",background:"white"}}/>
+                          <button onClick={()=>{
+                              if(newMonthly[cat].trim()){
+                                setMonthlyGoals(p=>({...p, [cat]: [...p[cat], {id:Date.now(), text:newMonthly[cat].trim(), done:false}]}));
+                                setNewMonthly(p=>({...p, [cat]:""}));
+                              }
+                            }}
+                            style={{background:"#1c1c1e",color:"white",border:"none",borderRadius:8,padding:"0 12px",cursor:"pointer",fontSize:14,fontWeight:700}}>+</button>
                         </div>
                       </div>
                     );
@@ -673,6 +656,25 @@ export default function WorkTime() {
                     </div>
                   ))}
                   {displayYearly.length === 0 && <div style={{fontSize:13,color:"#b0a89a",gridColumn:"1/-1"}}>항목이 없습니다.</div>}
+                </div>
+                
+                <div style={{display:"flex",gap:8,marginTop:20,maxWidth:320}}>
+                  <input value={newYearly} onChange={e=>setNewYearly(e.target.value)}
+                    onKeyDown={e=>{
+                      if(e.key==="Enter" && newYearly.trim()){
+                        setYearlyGoals(p=>[...p, {id:Date.now(), text:newYearly.trim(), done:false}]);
+                        setNewYearly("");
+                      }
+                    }}
+                    placeholder="2026년 목표 추가"
+                    style={{flex:1,border:"1px solid #ede9e3",borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:"#333",background:"#faf8f5"}}/>
+                  <button onClick={()=>{
+                      if(newYearly.trim()){
+                        setYearlyGoals(p=>[...p, {id:Date.now(), text:newYearly.trim(), done:false}]);
+                        setNewYearly("");
+                      }
+                    }}
+                    style={{background:"#1c1c1e",color:"white",border:"none",borderRadius:10,padding:"0 18px",cursor:"pointer",fontSize:18,fontWeight:700}}>+</button>
                 </div>
               </div>
             </div>
