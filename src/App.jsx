@@ -41,6 +41,41 @@ const SAMPLE_CAT = {
   "기타": [65,70,62,75],
 };
 
+const DEFAULT_MONTHLY_GOALS = {
+  "일": [
+    { id: 101, text: "신규 프로젝트 기획안", done: true },
+    { id: 102, text: "팀원 1:1 면담", done: false },
+    { id: 103, text: "월간 성과 보고서", done: false }
+  ],
+  "운동": [
+    { id: 201, text: "주 3회 헬스장", done: true },
+    { id: 202, text: "체지방 2% 감량", done: false },
+    { id: 203, text: "주말 등산 1회", done: true }
+  ],
+  "공부": [
+    { id: 301, text: "React 완벽 마스터", done: false },
+    { id: 302, text: "UX 아티클 5개", done: true },
+    { id: 303, text: "영어 회화 주2회", done: false }
+  ],
+  "기타": [
+    { id: 401, text: "방 정리 및 청소", done: true },
+    { id: 402, text: "가족과 저녁식사", done: true },
+    { id: 403, text: "새로운 취미 찾기", done: false }
+  ]
+};
+
+const DEFAULT_YEARLY_GOALS = [
+  { id: 1, text: "연봉 20% 인상", done: false },
+  { id: 2, text: "바디프로필 촬영", done: false },
+  { id: 3, text: "해외 여행 2회", done: false },
+  { id: 4, text: "토익 900점 달성", done: false },
+  { id: 5, text: "독서 20권 읽기", done: true },
+  { id: 6, text: "투자 수익률 10%", done: false },
+  { id: 7, text: "사이드 플젝 배포", done: true },
+  { id: 8, text: "자격증 1개 취득", done: false },
+  { id: 9, text: "매월 50만원 저축", done: true }
+];
+
 function calcCatRates(todos) {
   const r = {};
   CATS.forEach(c => {
@@ -199,6 +234,9 @@ export default function WorkTime() {
   const [modal, setModal] = useState(null);
   const [newTodo, setNewTodo] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [monthlyGoals, setMonthlyGoals] = useState(DEFAULT_MONTHLY_GOALS);
+  const [yearlyGoals, setYearlyGoals] = useState(DEFAULT_YEARLY_GOALS);
+  const [goalsTab, setGoalsTab] = useState("전체");
 
   useEffect(() => {
     const init = async () => {
@@ -549,15 +587,98 @@ export default function WorkTime() {
       )}
 
       {/* ── GOALS ── */}
-      {nav === "goals" && (
-        <main style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{textAlign:"center",color:"#b0a89a"}}>
-            <p style={{fontSize:40,margin:"0 0 12px"}}>◎</p>
-            <p style={{fontSize:15,fontWeight:600,color:"#555",margin:"0 0 6px"}}>Goals</p>
-            <p style={{fontSize:12,margin:0}}>곧 출시될 예정이에요</p>
-          </div>
-        </main>
-      )}
+      {nav === "goals" && (() => {
+        const allMonthly = Object.values(monthlyGoals).flat();
+        const monthlyDone = allMonthly.filter(g=>g.done).length;
+        const monthlyRate = allMonthly.length ? Math.round(monthlyDone / allMonthly.length * 100) : 0;
+        
+        const yearlyDone = yearlyGoals.filter(g=>g.done).length;
+        const yearlyRate = yearlyGoals.length ? Math.round(yearlyDone / yearlyGoals.length * 100) : 0;
+        
+        const displayYearly = yearlyGoals.filter(g => goalsTab==="전체" ? true : goalsTab==="진행중" ? !g.done : g.done);
+
+        return (
+          <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px"}}>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+              <div style={{display:"flex",background:"white",borderRadius:14,padding:5,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                {["전체", "진행중", "완료"].map(tab => (
+                  <button key={tab} onClick={() => setGoalsTab(tab)}
+                    style={{
+                      border:"none",padding:"10px 28px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",
+                      background:goalsTab===tab?"#1c1c1e":"transparent",
+                      color:goalsTab===tab?"white":"#b0a89a",
+                      transition:"all 0.2s"
+                    }}>{tab}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1.3fr",gap:16}}>
+              {/* Left Column: 5월 세부 목표 */}
+              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>5월 세부 목표</h2>
+                  <span style={{background:"#f59e0b",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{monthlyRate}% 달성</span>
+                </div>
+                
+                <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                  {CATS.map(cat => {
+                    const goals = monthlyGoals[cat];
+                    const catDone = goals.filter(g=>g.done).length;
+                    const catRate = goals.length ? Math.round(catDone / goals.length * 100) : 0;
+                    const displayGoals = goals.filter(g => goalsTab==="전체" ? true : goalsTab==="진행중" ? !g.done : g.done);
+                    
+                    return (
+                      <div key={cat} style={{background:"#faf8f5",borderRadius:16,padding:"16px"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <div style={{width:8,height:8,borderRadius:"50%",background:CAT_COLOR[cat]}}/>
+                            <span style={{fontWeight:700,fontSize:14}}>{cat}</span>
+                          </div>
+                          <span style={{fontWeight:700,fontSize:14,color:CAT_COLOR[cat]}}>{catRate}%</span>
+                        </div>
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          {displayGoals.map(g => (
+                            <div key={g.id} onClick={()=>setMonthlyGoals(p=>({...p, [cat]: p[cat].map(x=>x.id===g.id?{...x,done:!x.done}:x)}))}
+                              style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"4px 0"}}>
+                              <div style={{width:18,height:18,borderRadius:5,border:"2px solid "+(g.done?CAT_COLOR[cat]:"#ddd8d0"),background:g.done?CAT_COLOR[cat]:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",flexShrink:0}}>
+                                {g.done && <span style={{color:"white",fontSize:10,fontWeight:800}}>✓</span>}
+                              </div>
+                              <span style={{fontSize:13,fontWeight:500,color:g.done?"#c5bdb3":"#333",textDecoration:g.done?"line-through":"none"}}>{g.text}</span>
+                            </div>
+                          ))}
+                          {displayGoals.length === 0 && <div style={{fontSize:12,color:"#b0a89a"}}>항목이 없습니다.</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column: 2026년 목표 */}
+              <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",alignSelf:"start"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>2026년 목표</h2>
+                  <span style={{background:"#1c1c1e",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{yearlyRate}% 달성</span>
+                </div>
+                
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:16}}>
+                  {displayYearly.map(g => (
+                    <div key={g.id} onClick={()=>setYearlyGoals(p=>p.map(x=>x.id===g.id?{...x,done:!x.done}:x))}
+                      style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 0"}}>
+                      <div style={{width:20,height:20,borderRadius:6,border:"2px solid "+(g.done?"#f59e0b":"#ddd8d0"),background:g.done?"#f59e0b":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",flexShrink:0}}>
+                        {g.done && <span style={{color:"white",fontSize:12,fontWeight:800}}>✓</span>}
+                      </div>
+                      <span style={{fontSize:14,fontWeight:500,color:g.done?"#c5bdb3":"#333",textDecoration:g.done?"line-through":"none"}}>{g.text}</span>
+                    </div>
+                  ))}
+                  {displayYearly.length === 0 && <div style={{fontSize:13,color:"#b0a89a",gridColumn:"1/-1"}}>항목이 없습니다.</div>}
+                </div>
+              </div>
+            </div>
+          </main>
+        );
+      })()}
 
       {modal && (
         <EventModal modal={modal} events={events}
