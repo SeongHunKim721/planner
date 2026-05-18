@@ -472,7 +472,7 @@ export default function WorkTime() {
 
       {/* ── ANALYTICS ── */}
       {nav === "analytics" && (
-        <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px"}}>
+        <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px",display:"flex",flexDirection:"column"}}>
           <div style={{marginBottom:20}}>
             <p style={{margin:"0 0 2px",fontSize:10,color:"#b0a89a",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>애널리틱스</p>
             <h1 style={{margin:0,fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>{TODAY.year} 달성률 분석</h1>
@@ -500,9 +500,9 @@ export default function WorkTime() {
           </div>
 
           {/* Main grid */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 210px",gap:14,alignItems:"start"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,flex:1,minHeight:0}}>
             {/* Monthly overall chart */}
-            <div style={{background:"white",borderRadius:18,padding:"20px 22px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+            <div style={{background:"white",borderRadius:18,padding:"20px 22px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",display:"flex",flexDirection:"column"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
                 <div>
                   <p style={{margin:0,fontWeight:700,fontSize:13}}>매월 달성률</p>
@@ -512,8 +512,9 @@ export default function WorkTime() {
                   {TODAY.month}월 {(monthlyOverall.find(m=>m.month===`${TODAY.month}월`)||{}).rate||0}%
                 </span>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={monthlyOverall} margin={{top:6,right:8,left:-26,bottom:0}}>
+              <div style={{flex:1,minHeight:0}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={monthlyOverall} margin={{top:6,right:8,left:-26,bottom:0}}>
                   <CartesianGrid strokeDasharray="4 4" stroke="#f5f3ee" vertical={false}/>
                   <XAxis dataKey="month" tick={{fontSize:11,fill:"#c8c0b5"}} axisLine={false} tickLine={false}/>
                   <YAxis domain={[0,100]} tick={{fontSize:10,fill:"#c8c0b5"}} tickFormatter={v=>v+"%"} axisLine={false} tickLine={false}/>
@@ -522,15 +523,16 @@ export default function WorkTime() {
                     dot={{fill:"#f59e0b",r:4,stroke:"white",strokeWidth:2}} connectNulls={false}/>
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             </div>
 
             {/* 4 category mini charts */}
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",flexDirection:"column",gap:14,height:"100%"}}>
               {CATS.map(cat => {
                 const data = getMonthlyForCat(cat, todos);
                 const curVal = (data.find(d=>d.month===`${TODAY.month}월`)||{}).rate;
                 return (
-                  <div key={cat} style={{background:"white",borderRadius:14,padding:"12px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+                  <div key={cat} style={{background:"white",borderRadius:14,padding:"12px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
                         <div style={{width:7,height:7,borderRadius:"50%",background:CAT_COLOR[cat]}}/>
@@ -538,14 +540,16 @@ export default function WorkTime() {
                       </div>
                       <span style={{fontSize:11,fontWeight:700,color:CAT_COLOR[cat]}}>{curVal!==null&&curVal!==undefined?curVal+"%":"—"}</span>
                     </div>
-                    <ResponsiveContainer width="100%" height={48}>
-                      <LineChart data={data} margin={{top:2,right:4,left:-40,bottom:0}}>
-                        <YAxis domain={[0,100]} hide/>
-                        <Tooltip content={<SimpleTooltip/>}/>
-                        <Line type="monotone" dataKey="rate" stroke={CAT_COLOR[cat]} strokeWidth={2}
-                          dot={{fill:CAT_COLOR[cat],r:3,stroke:"white",strokeWidth:1.5}} connectNulls={false}/>
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div style={{flex:1,minHeight:0}}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={data} margin={{top:2,right:4,left:-40,bottom:0}}>
+                          <YAxis domain={[0,100]} hide/>
+                          <Tooltip content={<SimpleTooltip/>}/>
+                          <Line type="monotone" dataKey="rate" stroke={CAT_COLOR[cat]} strokeWidth={2}
+                            dot={{fill:CAT_COLOR[cat],r:3,stroke:"white",strokeWidth:1.5}} connectNulls={false}/>
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
                       {data.map(d=><span key={d.month} style={{fontSize:9,color:"#c8c0b5"}}>{d.month}</span>)}
                     </div>
