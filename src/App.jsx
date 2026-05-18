@@ -184,6 +184,86 @@ function EventModal({ modal, events, onClose, onAdd, onDelete, onSave }) {
       </div>
     </div>
   );
+function GoalModal({ category, goals, onClose, onAdd, onEdit, onDelete, color }) {
+  const [newGoal, setNewGoal] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editGoal, setEditGoal] = useState("");
+
+  function handleAdd() {
+    if (!newGoal.trim()) return;
+    onAdd(category, newGoal.trim());
+    setNewGoal("");
+  }
+
+  function handleSave() {
+    if (!editGoal.trim()) return;
+    onEdit(category, editingId, editGoal.trim());
+    setEditingId(null);
+  }
+
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{position:"fixed",inset:0,background:"rgba(28,20,10,0.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50}}>
+      <div style={{background:"white",borderRadius:22,padding:"24px",width:320,boxShadow:"0 24px 64px rgba(0,0,0,0.18)",maxHeight:"80vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {color && <div style={{width:10,height:10,borderRadius:"50%",background:color}}/>}
+            <h3 style={{margin:0,fontSize:17,fontWeight:700,letterSpacing:"-0.4px"}}>{category}</h3>
+          </div>
+          <button onClick={onClose} style={{border:"none",background:"#f5f2ee",borderRadius:9,width:30,height:30,cursor:"pointer",fontSize:15,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+        </div>
+
+        {goals.length > 0 && (
+          <div style={{marginBottom:18}}>
+            <p style={{margin:"0 0 10px",fontSize:11,color:"#b0a89a",fontWeight:600}}>등록된 목표 {goals.length}개</p>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {goals.map((g) => {
+                const isEditing = editingId === g.id;
+                return (
+                  <div key={g.id} style={{borderRadius:12,border:"1.5px solid "+(isEditing?"#1c1c1e":"#f0ece6"),overflow:"hidden"}}>
+                    {isEditing ? (
+                      <div style={{padding:"11px 12px",background:"#faf8f5"}}>
+                        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:10}}>
+                          <input value={editGoal} onChange={e => setEditGoal(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") handleSave(); }}
+                            style={{border:"1px solid #ede9e3",borderRadius:9,padding:"8px 11px",fontSize:12,outline:"none",background:"white",color:"#333"}}/>
+                        </div>
+                        <div style={{display:"flex",gap:7}}>
+                          <button onClick={() => setEditingId(null)} style={{flex:1,padding:"8px",border:"1px solid #ede9e3",borderRadius:9,cursor:"pointer",background:"transparent",fontSize:11,color:"#999"}}>취소</button>
+                          <button onClick={handleSave} style={{flex:1,padding:"8px",border:"none",borderRadius:9,cursor:"pointer",background:"#1c1c1e",color:"white",fontSize:11,fontWeight:700}}>저장</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{display:"flex",alignItems:"center",padding:"10px 12px",background:"#faf8f5"}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:500,color:g.done?"#c5bdb3":"#333",textDecoration:g.done?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.text}</div>
+                        </div>
+                        <div style={{display:"flex",gap:5,flexShrink:0,marginLeft:8}}>
+                          <button onClick={() => { setEditingId(g.id); setEditGoal(g.text); }}
+                            style={{width:28,height:28,border:"1px solid #ede9e3",borderRadius:8,cursor:"pointer",background:"white",fontSize:13,color:"#888",display:"flex",alignItems:"center",justifyContent:"center"}}>✎</button>
+                          <button onClick={() => onDelete(category, g.id)}
+                            style={{width:28,height:28,border:"1px solid #fde8e8",borderRadius:8,cursor:"pointer",background:"#fff5f5",fontSize:13,color:"#fb7185",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {goals.length > 0 && <div style={{height:1,background:"#f0ece6",marginBottom:18}}/>}
+        <p style={{margin:"0 0 10px",fontSize:11,color:"#b0a89a",fontWeight:600}}>새 목표 추가</p>
+        <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
+          <input value={newGoal} onChange={e => setNewGoal(e.target.value)}
+            placeholder="목표 내용을 입력하세요" onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
+            style={{border:"1px solid #ede9e3",borderRadius:11,padding:"10px 13px",fontSize:12,outline:"none",background:"#faf8f5",color:"#333"}}/>
+        </div>
+        <button onClick={handleAdd} style={{width:"100%",padding:"12px",border:"none",borderRadius:12,cursor:"pointer",background:"#1c1c1e",color:"white",fontSize:13,fontWeight:700}}>+ 목표 추가</button>
+      </div>
+    </div>
+  );
 }
 
 export default function WorkTime() {
@@ -198,8 +278,31 @@ export default function WorkTime() {
   const [monthlyGoals, setMonthlyGoals] = useState(DEFAULT_MONTHLY_GOALS);
   const [yearlyGoals, setYearlyGoals] = useState(DEFAULT_YEARLY_GOALS);
   const [goalsTab, setGoalsTab] = useState("전체");
-  const [newMonthly, setNewMonthly] = useState({ "일": "", "운동": "", "공부": "", "기타": "" });
-  const [newYearly, setNewYearly] = useState("");
+  const [goalModal, setGoalModal] = useState(null);
+
+  const handleAddGoal = (category, text) => {
+    if (category === `${TODAY.year}년 목표`) {
+      setYearlyGoals(p => [...p, {id: Date.now(), text, done: false}]);
+    } else {
+      setMonthlyGoals(p => ({...p, [category]: [...p[category], {id: Date.now(), text, done: false}]}));
+    }
+  };
+
+  const handleEditGoal = (category, id, newText) => {
+    if (category === `${TODAY.year}년 목표`) {
+      setYearlyGoals(p => p.map(g => g.id === id ? {...g, text: newText} : g));
+    } else {
+      setMonthlyGoals(p => ({...p, [category]: p[category].map(g => g.id === id ? {...g, text: newText} : g)}));
+    }
+  };
+
+  const handleDeleteGoal = (category, id) => {
+    if (category === `${TODAY.year}년 목표`) {
+      setYearlyGoals(p => p.filter(g => g.id !== id));
+    } else {
+      setMonthlyGoals(p => ({...p, [category]: p[category].filter(g => g.id !== id)}));
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -606,9 +709,10 @@ export default function WorkTime() {
                     return (
                       <div key={cat} style={{background:"#faf8f5",borderRadius:16,padding:"16px"}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={() => setGoalModal(cat)}>
                             <div style={{width:8,height:8,borderRadius:"50%",background:CAT_COLOR[cat]}}/>
                             <span style={{fontWeight:700,fontSize:14}}>{cat}</span>
+                            <span style={{fontSize:11,color:"#999",marginLeft:4}}>추가/수정 ✎</span>
                           </div>
                           <span style={{fontWeight:700,fontSize:14,color:CAT_COLOR[cat]}}>{catRate}%</span>
                         </div>
@@ -624,24 +728,6 @@ export default function WorkTime() {
                           ))}
                           {displayGoals.length === 0 && <div style={{fontSize:12,color:"#b0a89a",marginBottom:4}}>항목이 없습니다.</div>}
                         </div>
-                        <div style={{display:"flex",gap:6,marginTop:12}}>
-                          <input value={newMonthly[cat]} onChange={e=>setNewMonthly(p=>({...p, [cat]:e.target.value}))}
-                            onKeyDown={e=>{
-                              if(e.key==="Enter" && newMonthly[cat].trim()){
-                                setMonthlyGoals(p=>({...p, [cat]: [...p[cat], {id:Date.now(), text:newMonthly[cat].trim(), done:false}]}));
-                                setNewMonthly(p=>({...p, [cat]:""}));
-                              }
-                            }}
-                            placeholder="목표 추가"
-                            style={{flex:1,border:"1px solid #ede9e3",borderRadius:8,padding:"6px 10px",fontSize:11,outline:"none",color:"#333",background:"white"}}/>
-                          <button onClick={()=>{
-                              if(newMonthly[cat].trim()){
-                                setMonthlyGoals(p=>({...p, [cat]: [...p[cat], {id:Date.now(), text:newMonthly[cat].trim(), done:false}]}));
-                                setNewMonthly(p=>({...p, [cat]:""}));
-                              }
-                            }}
-                            style={{background:"#1c1c1e",color:"white",border:"none",borderRadius:8,padding:"0 12px",cursor:"pointer",fontSize:14,fontWeight:700}}>+</button>
-                        </div>
                       </div>
                     );
                   })}
@@ -651,7 +737,10 @@ export default function WorkTime() {
               {/* Right Column: 2026년 목표 */}
               <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",alignSelf:"start"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.year}년 목표</h2>
+                  <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={() => setGoalModal(`${TODAY.year}년 목표`)}>
+                    <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.year}년 목표</h2>
+                    <span style={{fontSize:12,color:"#999",marginLeft:4}}>추가/수정 ✎</span>
+                  </div>
                   <span style={{background:"#1c1c1e",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{yearlyRate}% 달성</span>
                 </div>
                 
@@ -667,30 +756,23 @@ export default function WorkTime() {
                   ))}
                   {displayYearly.length === 0 && <div style={{fontSize:13,color:"#b0a89a",gridColumn:"1/-1"}}>항목이 없습니다.</div>}
                 </div>
-                
-                <div style={{display:"flex",gap:8,marginTop:20,maxWidth:320}}>
-                  <input value={newYearly} onChange={e=>setNewYearly(e.target.value)}
-                    onKeyDown={e=>{
-                      if(e.key==="Enter" && newYearly.trim()){
-                        setYearlyGoals(p=>[...p, {id:Date.now(), text:newYearly.trim(), done:false}]);
-                        setNewYearly("");
-                      }
-                    }}
-                    placeholder={`${TODAY.year}년 목표 추가`}
-                    style={{flex:1,border:"1px solid #ede9e3",borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:"#333",background:"#faf8f5"}}/>
-                  <button onClick={()=>{
-                      if(newYearly.trim()){
-                        setYearlyGoals(p=>[...p, {id:Date.now(), text:newYearly.trim(), done:false}]);
-                        setNewYearly("");
-                      }
-                    }}
-                    style={{background:"#1c1c1e",color:"white",border:"none",borderRadius:10,padding:"0 18px",cursor:"pointer",fontSize:18,fontWeight:700}}>+</button>
-                </div>
               </div>
             </div>
           </main>
         );
       })()}
+
+      {goalModal && (
+        <GoalModal
+          category={goalModal}
+          goals={goalModal === `${TODAY.year}년 목표` ? yearlyGoals : monthlyGoals[goalModal]}
+          color={goalModal === `${TODAY.year}년 목표` ? null : CAT_COLOR[goalModal]}
+          onClose={() => setGoalModal(null)}
+          onAdd={handleAddGoal}
+          onEdit={handleEditGoal}
+          onDelete={handleDeleteGoal}
+        />
+      )}
 
       {modal && (
         <EventModal modal={modal} events={events}
