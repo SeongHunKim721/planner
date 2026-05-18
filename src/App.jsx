@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
-const TODAY = { year: 2026, month: 5, day: 19 };
-const TODAY_STR = "2026-5-19";
+const _now = new Date();
+const TODAY = { year: _now.getFullYear(), month: _now.getMonth() + 1, day: _now.getDate() };
+const TODAY_STR = `${TODAY.year}-${TODAY.month}-${TODAY.day}`;
 const EV_COLORS = ["#f59e0b","#818cf8","#fb7185","#34d399","#60a5fa"];
 const MONTH_LABELS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 const DAY_LABELS = ["일","월","화","수","목","금","토"];
@@ -45,22 +46,24 @@ function calcCatRates(todos) {
 
 function getMonthlyOverall(todos) {
   const cr = calcCatRates(todos);
-  const validMay = CATS.map(c => cr[c]).filter(v => v !== null);
-  const mayR = validMay.length ? Math.round(validMay.reduce((a, b) => a + b, 0) / validMay.length) : null;
-  return ["1월","2월","3월","4월","5월"].map((m, i) => {
-    if (i < 4) {
+  const validCur = CATS.map(c => cr[c]).filter(v => v !== null);
+  const curR = validCur.length ? Math.round(validCur.reduce((a, b) => a + b, 0) / validCur.length) : null;
+  const months = Array.from({ length: TODAY.month }, (_, i) => `${i + 1}월`);
+  return months.map((m, i) => {
+    if (i < TODAY.month - 1) {
       const vals = CATS.map(c => SAMPLE_CAT[c][i]).filter(v => typeof v === 'number');
       return { month: m, rate: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null };
     }
-    return { month: m, rate: mayR };
+    return { month: m, rate: curR };
   });
 }
 
 function getMonthlyForCat(cat, todos) {
   const items = todos.filter(t => t.category === cat);
-  const mayR = items.length ? Math.round(items.filter(t => t.done).length / items.length * 100) : null;
-  return ["1월","2월","3월","4월","5월"].map((m, i) => ({
-    month: m, rate: i < 4 ? (typeof SAMPLE_CAT[cat][i] === 'number' ? SAMPLE_CAT[cat][i] : null) : mayR
+  const curR = items.length ? Math.round(items.filter(t => t.done).length / items.length * 100) : null;
+  const months = Array.from({ length: TODAY.month }, (_, i) => `${i + 1}월`);
+  return months.map((m, i) => ({
+    month: m, rate: i < TODAY.month - 1 ? (typeof SAMPLE_CAT[cat][i] === 'number' ? SAMPLE_CAT[cat][i] : null) : curR
   }));
 }
 
@@ -79,7 +82,7 @@ function DailyTooltip({ active, payload }) {
   const isToday = payload[0].payload.day === TODAY.day;
   return (
     <div style={{background:"#1c1c1e",borderRadius:9,padding:"8px 12px",fontSize:11}}>
-      <p style={{margin:0,color:"#888"}}>5월 {payload[0].payload.day}일{isToday ? " · 오늘" : ""}</p>
+      <p style={{margin:0,color:"#888"}}>{TODAY.month}월 {payload[0].payload.day}일{isToday ? " · 오늘" : ""}</p>
       <p style={{margin:"3px 0 0",fontWeight:700,color:isToday?"#f59e0b":"white",fontSize:13}}>{payload[0].value}%</p>
     </div>
   );
@@ -249,7 +252,7 @@ export default function WorkTime() {
   const todoRate = todos.length ? Math.round((doneCount / todos.length) * 100) : 0;
 
   const chartData = Array.from({ length: 31 }, (_, i) => {
-    const day = i + 1, key = "2026-5-" + day;
+    const day = i + 1, key = `${TODAY.year}-${TODAY.month}-${day}`;
     if (day < TODAY.day) return { day, rate: dailyRates[key] ?? null };
     if (day === TODAY.day) return { day, rate: todoRate };
     return { day, rate: null };
@@ -325,11 +328,11 @@ export default function WorkTime() {
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
             <div>
               <p style={{margin:"0 0 2px",fontSize:10,color:"#b0a89a",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>캘린더</p>
-              <h1 style={{margin:0,fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>2026년 5월</h1>
+              <h1 style={{margin:0,fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>{curMonth.year}년 {curMonth.month}월</h1>
             </div>
             <div style={{display:"flex",gap:8}}>
               <div style={{background:"white",borderRadius:12,padding:"8px 16px",fontSize:12,color:"#666",fontWeight:500,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>월평균 <strong style={{color:"#1a1a1a"}}>{avgRate}%</strong></div>
-              <div style={{background:"#1c1c1e",borderRadius:12,padding:"8px 16px",fontSize:12,color:"white",fontWeight:600}}>오늘 · 5/18</div>
+              <div style={{background:"#1c1c1e",borderRadius:12,padding:"8px 16px",fontSize:12,color:"white",fontWeight:600}}>오늘 · {TODAY.month}/{TODAY.day}</div>
             </div>
           </div>
 
@@ -398,7 +401,7 @@ export default function WorkTime() {
               <div style={{background:"white",borderRadius:18,padding:"16px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <span style={{fontWeight:700,fontSize:13}}>오늘 일정</span>
-                  <span style={{fontSize:10,color:"#b0a89a",background:"#f5f2ee",borderRadius:7,padding:"3px 9px",fontWeight:500}}>MAY 18</span>
+                  <span style={{fontSize:10,color:"#b0a89a",background:"#f5f2ee",borderRadius:7,padding:"3px 9px",fontWeight:500}}>{["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][TODAY.month-1]} {TODAY.day}</span>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:7}}>
                   {todayEvts.map((ev,idx)=>{
@@ -472,13 +475,13 @@ export default function WorkTime() {
         <main style={{flex:1,overflow:"auto",padding:"24px 22px 24px 10px"}}>
           <div style={{marginBottom:20}}>
             <p style={{margin:"0 0 2px",fontSize:10,color:"#b0a89a",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>애널리틱스</p>
-            <h1 style={{margin:0,fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>2026 달성률 분석</h1>
+            <h1 style={{margin:0,fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>{TODAY.year} 달성률 분석</h1>
           </div>
 
           {/* Top metric cards */}
           <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 1fr 1fr",gap:10,marginBottom:16}}>
             <div style={{background:"#1c1c1e",borderRadius:16,padding:"14px 16px"}}>
-              <p style={{margin:"0 0 8px",fontSize:10,color:"rgba(255,255,255,0.45)",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>2026 전체</p>
+              <p style={{margin:"0 0 8px",fontSize:10,color:"rgba(255,255,255,0.45)",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>{TODAY.year} 전체</p>
               <p style={{margin:0,fontSize:28,fontWeight:800,color:"#f59e0b",letterSpacing:"-0.5px"}}>{overall2026}%</p>
               <p style={{margin:"4px 0 0",fontSize:10,color:"rgba(255,255,255,0.35)"}}>전체 달성률</p>
             </div>
@@ -486,7 +489,7 @@ export default function WorkTime() {
               const rate = catRates[cat];
               return (
                 <div key={cat} style={{background:"white",borderRadius:16,padding:"14px 16px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
-                  <p style={{margin:"0 0 8px",fontSize:10,color:"#b0a89a",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>5월 {cat}</p>
+                  <p style={{margin:"0 0 8px",fontSize:10,color:"#b0a89a",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase"}}>{TODAY.month}월 {cat}</p>
                   <p style={{margin:0,fontSize:26,fontWeight:800,color:CAT_COLOR[cat],letterSpacing:"-0.5px"}}>{rate!==null?rate+"%":"—"}</p>
                   <div style={{marginTop:8,height:3,background:"#f5f2ee",borderRadius:2}}>
                     <div style={{height:"100%",width:(rate||0)+"%",background:CAT_COLOR[cat],borderRadius:2,transition:"width 0.4s"}}/>
@@ -503,10 +506,10 @@ export default function WorkTime() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
                 <div>
                   <p style={{margin:0,fontWeight:700,fontSize:13}}>매월 달성률</p>
-                  <p style={{margin:"3px 0 0",fontSize:11,color:"#c0b8ad"}}>2026년 1월 — 5월 · 전체 카테고리 평균</p>
+                  <p style={{margin:"3px 0 0",fontSize:11,color:"#c0b8ad"}}>{TODAY.year}년 1월 — {TODAY.month}월 · 전체 카테고리 평균</p>
                 </div>
                 <span style={{background:"#fef3c7",borderRadius:8,padding:"4px 11px",fontSize:11,color:"#92400e",fontWeight:600}}>
-                  5월 {(monthlyOverall.find(m=>m.month==="5월")||{}).rate||0}%
+                  {TODAY.month}월 {(monthlyOverall.find(m=>m.month===`${TODAY.month}월`)||{}).rate||0}%
                 </span>
               </div>
               <ResponsiveContainer width="100%" height={200}>
@@ -525,7 +528,7 @@ export default function WorkTime() {
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {CATS.map(cat => {
                 const data = getMonthlyForCat(cat, todos);
-                const mayVal = (data.find(d=>d.month==="5월")||{}).rate;
+                const curVal = (data.find(d=>d.month===`${TODAY.month}월`)||{}).rate;
                 return (
                   <div key={cat} style={{background:"white",borderRadius:14,padding:"12px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
@@ -533,7 +536,7 @@ export default function WorkTime() {
                         <div style={{width:7,height:7,borderRadius:"50%",background:CAT_COLOR[cat]}}/>
                         <span style={{fontSize:11,fontWeight:700}}>{cat}</span>
                       </div>
-                      <span style={{fontSize:11,fontWeight:700,color:CAT_COLOR[cat]}}>{mayVal!==null&&mayVal!==undefined?mayVal+"%":"—"}</span>
+                      <span style={{fontSize:11,fontWeight:700,color:CAT_COLOR[cat]}}>{curVal!==null&&curVal!==undefined?curVal+"%":"—"}</span>
                     </div>
                     <ResponsiveContainer width="100%" height={48}>
                       <LineChart data={data} margin={{top:2,right:4,left:-40,bottom:0}}>
@@ -585,7 +588,7 @@ export default function WorkTime() {
               {/* Left Column: 5월 세부 목표 */}
               <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>5월 세부 목표</h2>
+                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.month}월 세부 목표</h2>
                   <span style={{background:"#f59e0b",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{monthlyRate}% 달성</span>
                 </div>
                 
@@ -644,7 +647,7 @@ export default function WorkTime() {
               {/* Right Column: 2026년 목표 */}
               <div style={{background:"white",borderRadius:22,padding:"24px",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",alignSelf:"start"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>2026년 목표</h2>
+                  <h2 style={{margin:0,fontSize:18,fontWeight:700,letterSpacing:"-0.4px"}}>{TODAY.year}년 목표</h2>
                   <span style={{background:"#1c1c1e",color:"white",padding:"5px 12px",borderRadius:9,fontSize:12,fontWeight:700}}>{yearlyRate}% 달성</span>
                 </div>
                 
@@ -669,7 +672,7 @@ export default function WorkTime() {
                         setNewYearly("");
                       }
                     }}
-                    placeholder="2026년 목표 추가"
+                    placeholder={`${TODAY.year}년 목표 추가`}
                     style={{flex:1,border:"1px solid #ede9e3",borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:"#333",background:"#faf8f5"}}/>
                   <button onClick={()=>{
                       if(newYearly.trim()){
