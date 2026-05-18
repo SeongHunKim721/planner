@@ -270,7 +270,7 @@ function GoalModal({ category, goals, onClose, onAdd, onEdit, onDelete, color })
 
 export default function WorkTime() {
   const [nav, setNav] = useState("calendar");
-  const [curMonth, setCurMonth] = useState({ year: 2026, month: 5 });
+  const [curMonth, setCurMonth] = useState({ year: TODAY.year, month: TODAY.month });
   const [todos, setTodos] = useState(DEFAULT_TODOS);
   const [dailyRates, setDailyRates] = useState(BASE_RATES);
   const [events, setEvents] = useState(DEFAULT_EVENTS);
